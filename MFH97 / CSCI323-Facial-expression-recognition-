@@ -1,0 +1,575 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/MFH97/CSCI323-Facial-expression-recognition-/blob/main/MFH97%20/%20CSCI323-Facial-expression-recognition-\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "IIHvk-EHJjh_"
+      },
+      "source": [
+        "Facial Expression Recognition"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "BVgA4NC3Jp6B"
+      },
+      "source": [
+        "Mount the dataset from google drive"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "MuSMdQTjJuQl",
+        "outputId": "e45df3a3-25dd-4c0c-c025-f56d8169c69f"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "Mounted at /content/drive\n"
+          ]
+        }
+      ],
+      "source": [
+        "from google.colab import drive\n",
+        "drive.mount('/content/drive')\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "yDRYzH9FJzn9"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "y9quHe1UJy-_"
+      },
+      "source": [
+        "Load and Pre process"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "aDJOluiCKAsN",
+        "outputId": "ba4b3bc6-e6a8-4c95-c1fd-9c99eb73b8ce"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "Found 1120 images belonging to 7 classes.\n",
+            "Found 280 images belonging to 7 classes.\n"
+          ]
+        }
+      ],
+      "source": [
+        "import os\n",
+        "import numpy as np\n",
+        "from tensorflow.keras.preprocessing.image import ImageDataGenerator\n",
+        "\n",
+        "base_dir = '/content/drive/MyDrive/Assignment/train'\n",
+        "img_size = (224, 224)  # Size for VGG and ResNet input\n",
+        "\n",
+        "datagen = ImageDataGenerator(rescale=1./255, validation_split=0.2)\n",
+        "\n",
+        "train_generator = datagen.flow_from_directory(\n",
+        "    base_dir,\n",
+        "    target_size=img_size,\n",
+        "    batch_size=32,\n",
+        "    class_mode='categorical',\n",
+        "    subset='training'\n",
+        ")\n",
+        "\n",
+        "validation_generator = datagen.flow_from_directory(\n",
+        "    base_dir,\n",
+        "    target_size=img_size,\n",
+        "    batch_size=32,\n",
+        "    class_mode='categorical',\n",
+        "    subset='validation'\n",
+        ")\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "hoLIvuyTLlsn"
+      },
+      "source": [
+        "Model Training\n",
+        "\n",
+        "a.CNN"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "usvCHM1QLpGb",
+        "outputId": "714017b8-6983-4389-faa2-e690889e5516"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "Model: \"sequential\"\n",
+            "_________________________________________________________________\n",
+            " Layer (type)                Output Shape              Param #   \n",
+            "=================================================================\n",
+            " conv2d (Conv2D)             (None, 222, 222, 32)      896       \n",
+            "                                                                 \n",
+            " max_pooling2d (MaxPooling2  (None, 111, 111, 32)      0         \n",
+            " D)                                                              \n",
+            "                                                                 \n",
+            " conv2d_1 (Conv2D)           (None, 109, 109, 64)      18496     \n",
+            "                                                                 \n",
+            " max_pooling2d_1 (MaxPoolin  (None, 54, 54, 64)        0         \n",
+            " g2D)                                                            \n",
+            "                                                                 \n",
+            " conv2d_2 (Conv2D)           (None, 52, 52, 128)       73856     \n",
+            "                                                                 \n",
+            " max_pooling2d_2 (MaxPoolin  (None, 26, 26, 128)       0         \n",
+            " g2D)                                                            \n",
+            "                                                                 \n",
+            " flatten (Flatten)           (None, 86528)             0         \n",
+            "                                                                 \n",
+            " dense (Dense)               (None, 512)               44302848  \n",
+            "                                                                 \n",
+            " dropout (Dropout)           (None, 512)               0         \n",
+            "                                                                 \n",
+            " dense_1 (Dense)             (None, 7)                 3591      \n",
+            "                                                                 \n",
+            "=================================================================\n",
+            "Total params: 44399687 (169.37 MB)\n",
+            "Trainable params: 44399687 (169.37 MB)\n",
+            "Non-trainable params: 0 (0.00 Byte)\n",
+            "_________________________________________________________________\n",
+            "Epoch 1/10\n",
+            "35/35 [==============================] - 308s 9s/step - loss: 3.0516 - accuracy: 0.1491 - val_loss: 1.9674 - val_accuracy: 0.1429\n",
+            "Epoch 2/10\n",
+            "35/35 [==============================] - 152s 4s/step - loss: 1.9333 - accuracy: 0.2170 - val_loss: 1.9167 - val_accuracy: 0.2000\n",
+            "Epoch 3/10\n",
+            "35/35 [==============================] - 152s 4s/step - loss: 1.7440 - accuracy: 0.3402 - val_loss: 1.8441 - val_accuracy: 0.2893\n",
+            "Epoch 4/10\n",
+            "35/35 [==============================] - 160s 5s/step - loss: 1.3890 - accuracy: 0.5009 - val_loss: 2.0492 - val_accuracy: 0.2964\n",
+            "Epoch 5/10\n",
+            "35/35 [==============================] - 153s 4s/step - loss: 0.9518 - accuracy: 0.6598 - val_loss: 2.4786 - val_accuracy: 0.3179\n",
+            "Epoch 6/10\n",
+            "35/35 [==============================] - 149s 4s/step - loss: 0.6436 - accuracy: 0.7839 - val_loss: 2.7195 - val_accuracy: 0.3107\n",
+            "Epoch 7/10\n",
+            "35/35 [==============================] - 149s 4s/step - loss: 0.3630 - accuracy: 0.8929 - val_loss: 3.3912 - val_accuracy: 0.3179\n",
+            "Epoch 8/10\n",
+            "35/35 [==============================] - 157s 5s/step - loss: 0.1920 - accuracy: 0.9482 - val_loss: 3.8803 - val_accuracy: 0.2929\n",
+            "Epoch 9/10\n",
+            "35/35 [==============================] - 149s 4s/step - loss: 0.1543 - accuracy: 0.9598 - val_loss: 4.2866 - val_accuracy: 0.3250\n",
+            "Epoch 10/10\n",
+            "35/35 [==============================] - 147s 4s/step - loss: 0.1430 - accuracy: 0.9670 - val_loss: 4.6777 - val_accuracy: 0.3036\n"
+          ]
+        },
+        {
+          "data": {
+            "text/plain": [
+              "<keras.src.callbacks.History at 0x7d7690f563b0>"
+            ]
+          },
+          "execution_count": 4,
+          "metadata": {},
+          "output_type": "execute_result"
+        }
+      ],
+      "source": [
+        "from tensorflow.keras.models import Sequential\n",
+        "from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout\n",
+        "\n",
+        "def create_cnn_model():\n",
+        "    model = Sequential([\n",
+        "        Conv2D(32, (3, 3), activation='relu', input_shape=(224, 224, 3)),\n",
+        "        MaxPooling2D((2, 2)),\n",
+        "        Conv2D(64, (3, 3), activation='relu'),\n",
+        "        MaxPooling2D((2, 2)),\n",
+        "        Conv2D(128, (3, 3), activation='relu'),\n",
+        "        MaxPooling2D((2, 2)),\n",
+        "        Flatten(),\n",
+        "        Dense(512, activation='relu'),\n",
+        "        Dropout(0.5),\n",
+        "        Dense(7, activation='softmax')  # Assuming 7 classes\n",
+        "    ])\n",
+        "    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])\n",
+        "    return model\n",
+        "\n",
+        "cnn_model = create_cnn_model()\n",
+        "cnn_model.summary()\n",
+        "\n",
+        "cnn_model.fit(train_generator, validation_data=validation_generator, epochs=10)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "kVtLy1jOLuzw"
+      },
+      "source": [
+        "b. VGG16"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "background_save": true,
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "NlFdQLUtLyMG",
+        "outputId": "af5ef1e0-804a-4433-de03-74ce03304d70"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "Downloading data from https://storage.googleapis.com/tensorflow/keras-applications/vgg16/vgg16_weights_tf_dim_ordering_tf_kernels_notop.h5\n",
+            "58889256/58889256 [==============================] - 0s 0us/step\n",
+            "Model: \"sequential_2\"\n",
+            "_________________________________________________________________\n",
+            " Layer (type)                Output Shape              Param #   \n",
+            "=================================================================\n",
+            " vgg16 (Functional)          (None, 7, 7, 512)         14714688  \n",
+            "                                                                 \n",
+            " global_average_pooling2d (  (None, 512)               0         \n",
+            " GlobalAveragePooling2D)                                         \n",
+            "                                                                 \n",
+            " dense_4 (Dense)             (None, 512)               262656    \n",
+            "                                                                 \n",
+            " dropout_2 (Dropout)         (None, 512)               0         \n",
+            "                                                                 \n",
+            " dense_5 (Dense)             (None, 7)                 3591      \n",
+            "                                                                 \n",
+            "=================================================================\n",
+            "Total params: 14980935 (57.15 MB)\n",
+            "Trainable params: 14980935 (57.15 MB)\n",
+            "Non-trainable params: 0 (0.00 Byte)\n",
+            "_________________________________________________________________\n",
+            "Epoch 1/10\n",
+            "35/35 [==============================] - 2667s 76s/step - loss: 2.1007 - accuracy: 0.1311 - val_loss: 1.9462 - val_accuracy: 0.1460\n",
+            "Epoch 2/10\n",
+            "35/35 [==============================] - 2622s 76s/step - loss: 1.9498 - accuracy: 0.1512 - val_loss: 1.9454 - val_accuracy: 0.1460\n",
+            "Epoch 3/10\n",
+            "35/35 [==============================] - 2495s 73s/step - loss: 1.9469 - accuracy: 0.1503 - val_loss: 1.9456 - val_accuracy: 0.1460\n",
+            "Epoch 4/10\n",
+            "35/35 [==============================] - 2522s 72s/step - loss: 1.9480 - accuracy: 0.1148 - val_loss: 1.9454 - val_accuracy: 0.1387\n",
+            "Epoch 5/10\n",
+            "35/35 [==============================] - 2560s 73s/step - loss: 1.9459 - accuracy: 0.1566 - val_loss: 1.9454 - val_accuracy: 0.1460\n",
+            "Epoch 6/10\n",
+            "35/35 [==============================] - 2585s 74s/step - loss: 1.9464 - accuracy: 0.1321 - val_loss: 1.9454 - val_accuracy: 0.1460\n",
+            "Epoch 7/10\n",
+            "35/35 [==============================] - 2718s 78s/step - loss: 1.9469 - accuracy: 0.1421 - val_loss: 1.9454 - val_accuracy: 0.1460\n",
+            "Epoch 8/10\n",
+            "21/35 [=================>............] - ETA: 17:15 - loss: 1.9449 - accuracy: 0.1503"
+          ]
+        }
+      ],
+      "source": [
+        "from tensorflow.keras.applications import VGG16\n",
+        "from tensorflow.keras.layers import GlobalAveragePooling2D\n",
+        "\n",
+        "def create_vgg_model():\n",
+        "    base_model = VGG16(weights='imagenet', include_top=False, input_shape=(224, 224, 3))\n",
+        "    model = Sequential([\n",
+        "        base_model,\n",
+        "        GlobalAveragePooling2D(),\n",
+        "        Dense(512, activation='relu'),\n",
+        "        Dropout(0.5),\n",
+        "        Dense(7, activation='softmax')\n",
+        "    ])\n",
+        "    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])\n",
+        "    return model\n",
+        "\n",
+        "vgg_model = create_vgg_model()\n",
+        "vgg_model.summary()\n",
+        "\n",
+        "vgg_model.fit(train_generator, validation_data=validation_generator, epochs=10)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "GiyOujavL6xA"
+      },
+      "source": [
+        "C. ResNut50"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "R6CkJBBQL9RF"
+      },
+      "outputs": [],
+      "source": [
+        "from tensorflow.keras.applications import ResNet50\n",
+        "\n",
+        "def create_resnet_model():\n",
+        "    base_model = ResNet50(weights='imagenet', include_top=False, input_shape=(224, 224, 3))\n",
+        "    model = Sequential([\n",
+        "        base_model,\n",
+        "        GlobalAveragePooling2D(),\n",
+        "        Dense(512, activation='relu'),\n",
+        "        Dropout(0.5),\n",
+        "        Dense(7, activation='softmax')\n",
+        "    ])\n",
+        "    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])\n",
+        "    return model\n",
+        "\n",
+        "resnet_model = create_resnet_model()\n",
+        "resnet_model.summary()\n",
+        "\n",
+        "resnet_model.fit(train_generator, validation_data=validation_generator, epochs=10)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "gZZY3YPzMRxh"
+      },
+      "source": [
+        "Model Evaluation"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "Gg1TymwgMTlg"
+      },
+      "outputs": [],
+      "source": [
+        "from sklearn.metrics import classification_report, confusion_matrix\n",
+        "\n",
+        "def evaluate_model(model, validation_generator):\n",
+        "    Y_pred = model.predict(validation_generator)\n",
+        "    y_pred = np.argmax(Y_pred, axis=1)\n",
+        "    print('Confusion Matrix')\n",
+        "    print(confusion_matrix(validation_generator.classes, y_pred))\n",
+        "    print('Classification Report')\n",
+        "    target_names = list(validation_generator.class_indices.keys())\n",
+        "    print(classification_report(validation_generator.classes, y_pred, target_names=target_names))\n",
+        "\n",
+        "evaluate_model(cnn_model, validation_generator)\n",
+        "evaluate_model(vgg_model, validation_generator)\n",
+        "evaluate_model(resnet_model, validation_generator)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "tFcOVTJfMxDr"
+      },
+      "source": [
+        "Predict Expression and Choose the image\n",
+        "\n",
+        "a. CNN"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "jHm4LjzcM3X4"
+      },
+      "outputs": [],
+      "source": [
+        "import numpy as np\n",
+        "from tensorflow.keras.preprocessing import image\n",
+        "import matplotlib.pyplot as plt\n",
+        "import matplotlib.image as mpimg\n",
+        "from google.colab import files\n",
+        "\n",
+        "# Function to load and preprocess the image\n",
+        "def load_and_preprocess_image(img_path):\n",
+        "    img = image.load_img(img_path, target_size=(48, 48))\n",
+        "    img_array = image.img_to_array(img)\n",
+        "    img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension\n",
+        "    img_array /= 255.0  # Rescale to [0, 1]\n",
+        "    return img_array\n",
+        "\n",
+        "# Function to predict the class of the image\n",
+        "def predict_emotion(img_path, model):\n",
+        "    class_labels = ['angry', 'disgust', 'fear', 'happy', 'neutral', 'sad', 'surprise']\n",
+        "    img_array = load_and_preprocess_image(img_path)\n",
+        "    predictions = model.predict(img_array)\n",
+        "    predicted_class = np.argmax(predictions)\n",
+        "    return class_labels[predicted_class]\n",
+        "\n",
+        "# Upload and predict\n",
+        "uploaded = files.upload()\n",
+        "\n",
+        "for img_path in uploaded.keys():\n",
+        "    # Display the image\n",
+        "    img = mpimg.imread(img_path)\n",
+        "    plt.imshow(img)\n",
+        "    plt.axis('off')\n",
+        "    plt.show()\n",
+        "\n",
+        "    # Predict the emotion\n",
+        "    predicted_emotion = predict_emotion(img_path, cnn_model )  # Replace `model` with the specific model variable\n",
+        "    print(f'The predicted emotion for {img_path} is: {predicted_emotion}')\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Rms9EbLpNF-v"
+      },
+      "source": [
+        "b. VGG16"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "1idOE-UDNJtm"
+      },
+      "outputs": [],
+      "source": [
+        "import numpy as np\n",
+        "from tensorflow.keras.preprocessing import image\n",
+        "import matplotlib.pyplot as plt\n",
+        "import matplotlib.image as mpimg\n",
+        "from google.colab import files\n",
+        "\n",
+        "# Function to load and preprocess the image\n",
+        "def load_and_preprocess_image(img_path):\n",
+        "    img = image.load_img(img_path, target_size=(48, 48))\n",
+        "    img_array = image.img_to_array(img)\n",
+        "    img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension\n",
+        "    img_array /= 255.0  # Rescale to [0, 1]\n",
+        "    return img_array\n",
+        "\n",
+        "# Function to predict the class of the image\n",
+        "def predict_emotion(img_path, model):\n",
+        "    class_labels = ['angry', 'disgust', 'fear', 'happy', 'neutral', 'sad', 'surprise']\n",
+        "    img_array = load_and_preprocess_image(img_path)\n",
+        "    predictions = model.predict(img_array)\n",
+        "    predicted_class = np.argmax(predictions)\n",
+        "    return class_labels[predicted_class]\n",
+        "\n",
+        "# Upload and predict\n",
+        "uploaded = files.upload()\n",
+        "\n",
+        "for img_path in uploaded.keys():\n",
+        "    # Display the image\n",
+        "    img = mpimg.imread(img_path)\n",
+        "    plt.imshow(img)\n",
+        "    plt.axis('off')\n",
+        "    plt.show()\n",
+        "\n",
+        "    # Predict the emotion\n",
+        "    predicted_emotion = predict_emotion(img_path, vgg_model )  # Replace `model` with the specific model variable\n",
+        "    print(f'The predicted emotion for {img_path} is: {predicted_emotion}')\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Xv3nmuRVNVTk"
+      },
+      "source": [
+        "C. ResNut"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "Im1atzggNZEe"
+      },
+      "outputs": [],
+      "source": [
+        "import numpy as np\n",
+        "from tensorflow.keras.preprocessing import image\n",
+        "import matplotlib.pyplot as plt\n",
+        "import matplotlib.image as mpimg\n",
+        "from google.colab import files\n",
+        "\n",
+        "# Function to load and preprocess the image\n",
+        "def load_and_preprocess_image(img_path):\n",
+        "    img = image.load_img(img_path, target_size=(48, 48))\n",
+        "    img_array = image.img_to_array(img)\n",
+        "    img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension\n",
+        "    img_array /= 255.0  # Rescale to [0, 1]\n",
+        "    return img_array\n",
+        "\n",
+        "# Function to predict the class of the image\n",
+        "def predict_emotion(img_path, model):\n",
+        "    class_labels = ['angry', 'disgust', 'fear', 'happy', 'neutral', 'sad', 'surprise']\n",
+        "    img_array = load_and_preprocess_image(img_path)\n",
+        "    predictions = model.predict(img_array)\n",
+        "    predicted_class = np.argmax(predictions)\n",
+        "    return class_labels[predicted_class]\n",
+        "\n",
+        "# Upload and predict\n",
+        "uploaded = files.upload()\n",
+        "\n",
+        "for img_path in uploaded.keys():\n",
+        "    # Display the image\n",
+        "    img = mpimg.imread(img_path)\n",
+        "    plt.imshow(img)\n",
+        "    plt.axis('off')\n",
+        "    plt.show()\n",
+        "\n",
+        "    # Predict the emotion\n",
+        "    predicted_emotion = predict_emotion(img_path, resnet_model )  # Replace `model` with the specific model variable\n",
+        "    print(f'The predicted emotion for {img_path} is: {predicted_emotion}')"
+      ]
+    }
+  ],
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "display_name": "Python 3",
+      "name": "python3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}
